@@ -1,6 +1,8 @@
 package com.idmi.app.screener.controllers;
 
 import java.util.List;
+
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -10,6 +12,7 @@ import com.idmi.app.screener.logic.BinanceApi;
 import com.idmi.app.screener.models.Coin;
 
 @RestController
+@CrossOrigin("*")
 public class ScreenerController
 {
 	@GetMapping("/stocks")
