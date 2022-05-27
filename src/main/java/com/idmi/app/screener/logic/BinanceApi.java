@@ -9,7 +9,6 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -43,20 +42,14 @@ public final class BinanceApi
 
 	private static final String stockURL = "https://api.binance.com/api/v3/depth?symbol=";
 	private static final String futureURL = "https://fapi.binance.com/fapi/v1/depth?symbol=";
-	private static int minQuontityValue = 400000;
 
-	public static void setMinQuontityValue(int minQuontityValue)
-	{
-		BinanceApi.minQuontityValue = minQuontityValue;
-	}
-
-	public static List<Coin> getCoins(boolean isFuture, boolean isAsks)
+	public static List<Coin> getCoins(boolean isFuture, boolean isAsks, int minQuontityValue)
 	{
 		List<Coin> outputCoins = new ArrayList<Coin>();
 		List<CompletableFuture<List<Coin>>> completableFutures = new ArrayList<CompletableFuture<List<Coin>>>();
 		for (int i = 0; i < ALLSYMBOLS.length; i++)
 		{
-			completableFutures.add(getCoinAsync(i, isFuture, isAsks));
+			completableFutures.add(getCoinAsync(i, isFuture, isAsks, minQuontityValue));
 		}
 		for (CompletableFuture<List<Coin>> completableFuture : completableFutures)
 		{
@@ -72,13 +65,14 @@ public final class BinanceApi
 		return outputCoins;
 	}
 
-	private static CompletableFuture<List<Coin>> getCoinAsync(int i, boolean isFuture, boolean isAsks)
+	private static CompletableFuture<List<Coin>> getCoinAsync(int i, boolean isFuture, boolean isAsks,
+			int minQuontityValue)
 	{
 		CompletableFuture<List<Coin>> completableFuture = CompletableFuture.supplyAsync(() ->
 		{
 			try
 			{
-				return getCoin(i, isFuture, isAsks);
+				return getCoin(i, isFuture, isAsks, minQuontityValue);
 			}
 			catch (IOException e)
 			{
@@ -88,7 +82,7 @@ public final class BinanceApi
 		return completableFuture;
 	}
 
-	private static List<Coin> getCoin(int i, boolean isFuture, boolean isAsks)
+	private static List<Coin> getCoin(int i, boolean isFuture, boolean isAsks, int minQuontityValue)
 			throws MalformedURLException, IOException, ProtocolException, JsonProcessingException, JsonMappingException
 	{
 
