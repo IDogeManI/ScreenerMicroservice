@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.idmi.app.screener.models.Coin;
 
@@ -42,20 +43,20 @@ public final class BinanceApi
 
 	private static final String stockURL = "https://api.binance.com/api/v3/depth?symbol=";
 	private static final String futureURL = "https://fapi.binance.com/fapi/v1/depth?symbol=";
-	private static int minQuontityValue = 500000;
+	private static int minQuontityValue = 200000;
 
 	public static void setMinQuontityValue(int minQuontityValue)
 	{
 		BinanceApi.minQuontityValue = minQuontityValue;
 	}
 
-	public static List<Coin> getCoins(boolean isFuture)
+	public static List<Coin> getCoins(boolean isFuture, boolean isAsks)
 	{
 		List<Coin> outputCoins = new ArrayList<Coin>();
 		List<CompletableFuture<List<Coin>>> completableFutures = new ArrayList<CompletableFuture<List<Coin>>>();
 		for (int i = 0; i < ALLSYMBOLS.length; i++)
 		{
-			completableFutures.add(getCoinAsync(i, isFuture));
+			completableFutures.add(getCoinAsync(i, isFuture, isAsks));
 		}
 		for (CompletableFuture<List<Coin>> completableFuture : completableFutures)
 		{
@@ -71,59 +72,47 @@ public final class BinanceApi
 		return outputCoins;
 	}
 
-	private static CompletableFuture<List<Coin>> getCoinAsync(int i, boolean isFuture)
+	private static CompletableFuture<List<Coin>> getCoinAsync(int i, boolean isFuture, boolean isAsks)
 	{
 		CompletableFuture<List<Coin>> completableFuture = CompletableFuture.supplyAsync(() ->
 		{
-			List<Coin> outputCoins = new ArrayList<Coin>();
-			StringBuilder result = new StringBuilder();
-			URL url;
 			try
 			{
-				url = new URL(isFuture ? futureURL : stockURL + ALLSYMBOLS[i] + "&limit=100");
+				return getCoin(i, isFuture, isAsks);
 			}
-			catch (MalformedURLException e1)
+			catch (IOException e)
 			{
 				return new ArrayList<Coin>();
 			}
-			HttpURLConnection conn;
-			try
+		});
+		return completableFuture;
+	}
+
+	private static List<Coin> getCoin(int i, boolean isFuture, boolean isAsks)
+			throws MalformedURLException, IOException, ProtocolException, JsonProcessingException, JsonMappingException
+	{
+
+		List<Coin> outputCoins = new ArrayList<Coin>();
+		StringBuilder result = new StringBuilder();
+
+		URL url;
+		url = new URL(isFuture ? futureURL : stockURL + ALLSYMBOLS[i] + "&limit=100");
+		HttpURLConnection conn;
+		conn = (HttpURLConnection) url.openConnection();
+		conn.setRequestMethod("GET");
+
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream())))
+		{
+			for (String line; (line = reader.readLine()) != null;)
 			{
-				conn = (HttpURLConnection) url.openConnection();
+				result.append(line);
 			}
-			catch (IOException e1)
-			{
-				return new ArrayList<Coin>();
-			}
-			try
-			{
-				conn.setRequestMethod("GET");
-			}
-			catch (ProtocolException e1)
-			{
-				return new ArrayList<Coin>();
-			}
-			try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream())))
-			{
-				for (String line; (line = reader.readLine()) != null;)
-				{
-					result.append(line);
-				}
-			}
-			catch (Exception e)
-			{
-				return new ArrayList<Coin>();
-			}
-			Map<String, Object> outputMap;
-			try
-			{
-				outputMap = new ObjectMapper().readValue(result.toString(), HashMap.class);
-			}
-			catch (JsonProcessingException e)
-			{
-				return new ArrayList<Coin>();
-			}
-			List<List<String>> asks = (List<List<String>>) outputMap.get("asks");
+		}
+
+		Map<String, Object> outputMap = new ObjectMapper().readValue(result.toString(), HashMap.class);
+		List<List<String>> asks = (List<List<String>>) outputMap.get("asks");
+		if (isAsks)
+		{
 			for (List<String> ask : asks)
 			{
 				float price = Float.valueOf(ask.get(0));
@@ -134,7 +123,9 @@ public final class BinanceApi
 					outputCoins.add(new Coin(ALLSYMBOLS[i], price, quantity, price * quantity));
 				}
 			}
-
+		}
+		else
+		{
 			List<List<String>> bids = (List<List<String>>) outputMap.get("bids");
 			for (List<String> bid : bids)
 			{
@@ -146,8 +137,7 @@ public final class BinanceApi
 					outputCoins.add(new Coin(ALLSYMBOLS[i], price, quantity, price * quantity));
 				}
 			}
-			return outputCoins;
-		});
-		return completableFuture;
+		}
+		return outputCoins;
 	}
 }

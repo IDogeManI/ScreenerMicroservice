@@ -15,16 +15,28 @@ import com.idmi.app.screener.models.Coin;
 @CrossOrigin("*")
 public class ScreenerController
 {
-	@GetMapping("/stocks")
-	public List<Coin> getStockCoins()
+	@GetMapping("/spot/asks")
+	public List<Coin> getSpotAskCoins()
 	{
-		return BinanceApi.getCoins(false);
+		return BinanceApi.getCoins(false, true);
 	}
 
-	@GetMapping("/futures")
-	public List<Coin> getFutureCoins()
+	@GetMapping("/spot/bids")
+	public List<Coin> getSpotBidsCoins()
 	{
-		return BinanceApi.getCoins(true);
+		return BinanceApi.getCoins(false, false);
+	}
+
+	@GetMapping("/futures/asks")
+	public List<Coin> getFutureAsksCoins()
+	{
+		return BinanceApi.getCoins(true, true);
+	}
+
+	@GetMapping("/futures/bids")
+	public List<Coin> getFutureBidsCoins()
+	{
+		return BinanceApi.getCoins(true, true);
 	}
 
 	@PutMapping("/")
