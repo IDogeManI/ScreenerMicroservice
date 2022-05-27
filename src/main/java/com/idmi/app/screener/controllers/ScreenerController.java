@@ -28,13 +28,13 @@ public class ScreenerController
 	}
 
 	@GetMapping("/futures/asks")
-	public List<Coin> getFutureAsksCoins()
+	public List<Coin> getFuturesAsksCoins()
 	{
 		return BinanceApi.getCoins(true, true);
 	}
 
 	@GetMapping("/futures/bids")
-	public List<Coin> getFutureBidsCoins()
+	public List<Coin> getFuturesBidsCoins()
 	{
 		return BinanceApi.getCoins(true, true);
 	}

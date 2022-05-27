@@ -43,7 +43,7 @@ public final class BinanceApi
 
 	private static final String stockURL = "https://api.binance.com/api/v3/depth?symbol=";
 	private static final String futureURL = "https://fapi.binance.com/fapi/v1/depth?symbol=";
-	private static int minQuontityValue = 200000;
+	private static int minQuontityValue = 400000;
 
 	public static void setMinQuontityValue(int minQuontityValue)
 	{
@@ -96,7 +96,7 @@ public final class BinanceApi
 		StringBuilder result = new StringBuilder();
 
 		URL url;
-		url = new URL(isFuture ? futureURL : stockURL + ALLSYMBOLS[i] + "&limit=100");
+		url = new URL((isFuture ? futureURL : stockURL) + ALLSYMBOLS[i] + "&limit=100");
 		HttpURLConnection conn;
 		conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("GET");
